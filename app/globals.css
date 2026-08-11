@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: #f7faf8;
+  color: #16241b;
+}
+
+table {
+  border-collapse: collapse;
+}

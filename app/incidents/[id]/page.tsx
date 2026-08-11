@@ -34,6 +34,7 @@ export default function IncidentDetailPage() {
   const [receivingAssociate, setReceivingAssociate] = useState('');
   const [closeMissing, setCloseMissing] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
+  const [postSpillReviewExists, setPostSpillReviewExists] = useState<boolean | null>(null);
 
   const actorBody = { actor: name || 'Unknown', actorRole: role };
 
@@ -44,6 +45,11 @@ export default function IncidentDetailPage() {
 
   useEffect(() => {
     if (id) refresh();
+    if (id) {
+      fetch(`/api/incidents/${id}/post-spill-review`, { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((d) => setPostSpillReviewExists(!!d.review));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -304,6 +310,17 @@ export default function IncidentDetailPage() {
             )}
           </div>
         )}
+      </div>
+
+      <div className="border p-2">
+        <h2 className="font-bold mb-1">Post-Spill Review (Assignment 6)</h2>
+        <p className="text-xs mb-2">
+          Separate from Generate Response Brief above — this reviews the documented record after the response is
+          complete, drafts follow-up material, and routes it to WHS for sign-off.
+        </p>
+        <Link href={`/incidents/${id}/post-spill-review`} className="border px-2 py-1 inline-block bg-green-700 text-white">
+          {postSpillReviewExists ? 'View Post-Spill Review' : 'Start Post-Spill Review'}
+        </Link>
       </div>
 
       <div className="border p-2">

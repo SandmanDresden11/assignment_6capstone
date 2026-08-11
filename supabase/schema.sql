@@ -175,3 +175,103 @@ values
   ('Degreaser C', 'IndustrialPro', 'SKU-1190', '2025-05-20', 'https://example.com/sds/degreaser-c.pdf', 'Solvent-based degreaser, flammable vapors.'),
   ('Battery Electrolyte D', 'PowerCell', 'SKU-3305', '2023-09-10', 'https://example.com/sds/electrolyte-d.pdf', 'Corrosive acid solution, requires neutralization kit.')
 on conflict do nothing;
+
+-- ================================================================
+-- Assignment 6 Capstone additions: Post-Spill Review & Corrective
+-- Actions. Everything above this line is inherited from Assignment
+-- 5B unchanged. Nothing below ever writes back to the `incidents`
+-- table or its children -- AI-generated review content and
+-- conclusions live only in these new tables, so the original spill
+-- record stays exactly as documented at report time.
+-- ================================================================
+
+-- ---------- Post-Spill Reviews (one per incident) ----------
+create table if not exists post_spill_reviews (
+  id uuid primary key default gen_random_uuid(),
+  incident_id uuid not null unique references incidents(id) on delete cascade,
+  review_status text not null default 'AI Draft'
+    check (review_status in ('Not Started', 'AI Draft', 'WHS Review Required', 'WHS Reviewed')),
+  generated_at timestamptz not null default now(),
+  reviewed_at timestamptz,
+  reviewer text,
+  ai_summary text,
+  review_version int not null default 1,
+
+  -- Bounded routing-agent output (Post-Spill Review Routing Agent).
+  -- This is an administrative recommendation only -- it never implies
+  -- the spill itself was safe, compliant, or closed.
+  recommended_state text
+    check (recommended_state in ('DOCUMENTATION_INCOMPLETE', 'CORRECTIVE_ACTION_REVIEW_NEEDED', 'TREND_REVIEW_RECOMMENDED', 'READY_FOR_WHS_SIGN_OFF')),
+  recommended_reason text,
+  recommended_evidence jsonb default '[]',
+  recommended_next_step text,
+  recommended_limitations text,
+
+  created_at timestamptz not null default now()
+);
+
+-- ---------- Documentation Gaps ----------
+create table if not exists documentation_gaps (
+  id uuid primary key default gen_random_uuid(),
+  review_id uuid not null references post_spill_reviews(id) on delete cascade,
+  description text not null,
+  reason text,
+  status text not null default 'Open' check (status in ('Open', 'Resolved', 'Dismissed')),
+  ai_generated boolean not null default true,
+  reviewer_notes text,
+  created_at timestamptz not null default now()
+);
+
+-- ---------- Potential Follow-Up Themes (never "root cause") ----------
+create table if not exists followup_themes (
+  id uuid primary key default gen_random_uuid(),
+  review_id uuid not null references post_spill_reviews(id) on delete cascade,
+  theme text not null,
+  rationale text,
+  evidence text,
+  confidence text check (confidence in ('Low', 'Medium', 'High')),
+  accepted boolean,
+  created_at timestamptz not null default now()
+);
+
+-- ---------- Follow-Up Questions ----------
+create table if not exists followup_questions (
+  id uuid primary key default gen_random_uuid(),
+  review_id uuid not null references post_spill_reviews(id) on delete cascade,
+  question_text text not null,
+  ai_generated boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- ---------- AI-Suggested Corrective Actions ----------
+create table if not exists ai_suggested_actions (
+  id uuid primary key default gen_random_uuid(),
+  review_id uuid not null references post_spill_reviews(id) on delete cascade,
+  suggested_action text not null,
+  rationale text,
+  status text not null default 'Suggested' check (status in ('Suggested', 'Accepted', 'Edited', 'Rejected')),
+  created_at timestamptz not null default now()
+);
+
+-- ---------- Corrective Actions (Draft until a human saves final details) ----------
+create table if not exists corrective_actions (
+  id uuid primary key default gen_random_uuid(),
+  originating_suggestion_id uuid references ai_suggested_actions(id),
+  incident_id uuid not null references incidents(id) on delete cascade,
+  description text not null,
+  owner text,
+  due_date date,
+  status text not null default 'Draft' check (status in ('Draft', 'Open', 'In Progress', 'Complete', 'Cancelled')),
+  priority text check (priority in ('Low', 'Medium', 'High')),
+  originated_from_ai boolean not null default false,
+  created_at timestamptz not null default now(),
+  completed_at timestamptz
+);
+
+create index if not exists idx_post_spill_reviews_incident on post_spill_reviews(incident_id);
+create index if not exists idx_documentation_gaps_review on documentation_gaps(review_id);
+create index if not exists idx_followup_themes_review on followup_themes(review_id);
+create index if not exists idx_followup_questions_review on followup_questions(review_id);
+create index if not exists idx_ai_suggested_actions_review on ai_suggested_actions(review_id);
+create index if not exists idx_corrective_actions_incident on corrective_actions(incident_id);
+create index if not exists idx_corrective_actions_status on corrective_actions(status);

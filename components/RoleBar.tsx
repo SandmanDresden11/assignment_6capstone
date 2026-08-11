@@ -45,7 +45,13 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     <RoleContext.Provider value={{ name, role, setName, setRole }}>
       <div className="border border-green-800 bg-green-50 mb-4 p-2 flex flex-wrap gap-2 items-center text-sm">
         <a href="/" className="font-bold text-green-900">
-          HAZMAT SPILL RESPONSE TRACKER
+          HAZMAT SPILL TRACKER 2.0
+        </a>
+        <a href="/post-spill-reviews" className="underline">
+          Post-Spill Reviews
+        </a>
+        <a href="/corrective-actions" className="underline">
+          Corrective Actions
         </a>
         <span className="ml-auto">Acting as:</span>
         <input

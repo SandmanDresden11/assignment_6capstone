@@ -313,7 +313,7 @@ export default function IncidentDetailPage() {
       </div>
 
       <div className="border p-2">
-        <h2 className="font-bold mb-1">Post-Spill Review (Assignment 6)</h2>
+        <h2 className="font-bold mb-1">Post-Spill Review</h2>
         <p className="text-xs mb-2">
           Separate from Generate Response Brief above — this reviews the documented record after the response is
           complete, drafts follow-up material, and routes it to WHS for sign-off.

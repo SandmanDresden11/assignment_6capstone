@@ -162,7 +162,7 @@ Rules:
   try {
     const msg = await anthropic.messages.create({
       model: CLAUDE_MODEL,
-      max_tokens: 1400,
+      max_tokens: 2500,
       messages: [{ role: 'user', content: draftPrompt }],
     });
     draft = parseJsonResponse(textFromMessage(msg));
@@ -246,13 +246,15 @@ Respond with ONLY valid JSON matching exactly this shape:
   "recommendedNextStep": "1-2 sentences, phrased as a recommendation for the WHS Specialist, never as an instruction that already occurred",
   "limitations": "1 sentence on what this recommendation does NOT establish (e.g. does not determine root cause, does not certify the spill as closed)"
 }
-recommendedState must be exactly one of: DOCUMENTATION_INCOMPLETE, CORRECTIVE_ACTION_REVIEW_NEEDED, TREND_REVIEW_RECOMMENDED, READY_FOR_WHS_SIGN_OFF.`;
+recommendedState must be exactly one of: DOCUMENTATION_INCOMPLETE, CORRECTIVE_ACTION_REVIEW_NEEDED, TREND_REVIEW_RECOMMENDED, READY_FOR_WHS_SIGN_OFF.
+
+Each item in "evidence" must be a short, plain-English sentence fragment a WHS Specialist would actually read (e.g. "Scene notes were not recorded for this incident."). Never output a raw field name, key:value pair, or JSON-looking fragment (e.g. never write "leak_source: null" or "missingFields: ['scene_notes']") -- translate every signal into a readable sentence instead.`;
 
   let routing: any;
   try {
     const msg = await anthropic.messages.create({
       model: CLAUDE_MODEL,
-      max_tokens: 600,
+      max_tokens: 900,
       messages: [{ role: 'user', content: routingPrompt }],
     });
     routing = parseJsonResponse(textFromMessage(msg));

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { anthropic, CLAUDE_MODEL, textFromMessage, parseJsonResponse } from '@/lib/anthropic';
+import { callClaudeForJson } from '@/lib/anthropic';
 import { logAudit } from '@/lib/audit';
 import { computeDeterministicSignals } from '@/lib/postSpillSignals';
 
@@ -160,12 +160,7 @@ Rules:
 
   let draft: any;
   try {
-    const msg = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 2500,
-      messages: [{ role: 'user', content: draftPrompt }],
-    });
-    draft = parseJsonResponse(textFromMessage(msg));
+    draft = await callClaudeForJson(draftPrompt, 2500);
   } catch (e: any) {
     return NextResponse.json({ error: `Post-spill review drafting call failed: ${e.message}` }, { status: 502 });
   }
@@ -252,12 +247,7 @@ Each item in "evidence" must be a short, plain-English sentence fragment a WHS S
 
   let routing: any;
   try {
-    const msg = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 900,
-      messages: [{ role: 'user', content: routingPrompt }],
-    });
-    routing = parseJsonResponse(textFromMessage(msg));
+    routing = await callClaudeForJson(routingPrompt, 900);
   } catch (e: any) {
     // Drafting already succeeded and is saved; the routing recommendation is
     // advisory, so surface the failure but don't discard the review itself.

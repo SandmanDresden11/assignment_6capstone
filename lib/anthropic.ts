@@ -28,3 +28,25 @@ export function parseJsonResponse(text: string): any {
     .trim();
   return JSON.parse(stripped);
 }
+
+// Calls Claude and parses the reply as JSON, retrying once (with the same
+// prompt) if the first reply comes back malformed -- a stray trailing comma
+// or quoting slip in an otherwise-correct generation shouldn't need a human
+// to notice and manually re-trigger the request. Still throws (surfacing a
+// clear error) if the retry also fails to parse.
+export async function callClaudeForJson(prompt: string, maxTokens: number): Promise<any> {
+  let lastErr: any;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const msg = await anthropic.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: maxTokens,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    try {
+      return parseJsonResponse(textFromMessage(msg));
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr;
+}
